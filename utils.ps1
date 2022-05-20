@@ -1,3 +1,4 @@
+# define the headings according to ".md"
 $SYNOPSIS_HEADING = "## SYNOPSIS"
 $SYNTAX_HEADING = "## SYNTAX"
 $DESCRIPTION_HEADING = "## DESCRIPTION"
@@ -8,11 +9,14 @@ $SINGLE_EXAMPLE_TITLE_HEADING_REGEX = "$SINGLE_EXAMPLE_HEADING_REGEX.+"
 $CODE_BLOCK_REGEX = "``````(powershell)?\s*\n(.*\n)+?\s*``````"
 $OUTPUT_BLOCK_REGEX = "``````output\s*\n(.*\n)+?\s*``````"
 
+# which module, Cmdlet and the number of examples in ~.md
 class Scale {
     [string]$Module
     [string]$Cmdlet
     [int]$Examples
 }
+
+# describe which item for Cmdlet is missing
 class Missing {
     [string]$Module
     [string]$Cmdlet
@@ -23,6 +27,8 @@ class Missing {
     [int]$MissingExampleOutput
     [int]$MissingExampleDescription
 }
+
+# describe whether the cmdlet need to be deleting or spliting
 class DeletePromptAndSeparateOutput {
     [string]$Module
     [string]$Cmdlet
@@ -30,32 +36,44 @@ class DeletePromptAndSeparateOutput {
     [int]$NeedSplitting
 }
 
+# Get Examples Details From .Md
 function Get-ExamplesDetailsFromMd {
     param (
         [string]$MarkdownPath
     )
 
+    # -raw Get the contents of a file as one string, instead of an array of strings.
     $fileContent = Get-Content $MarkdownPath -Raw
 
+    # returns: Int32 The index position of the target string(index of the first word). $EXAMPLES_HEADING = "## EXAMPLES" $PARAMETERS_HEADING = "## PARAMETERS"
     $indexOfExamples = $fileContent.IndexOf($EXAMPLES_HEADING)
     $indexOfParameters = $fileContent.IndexOf($PARAMETERS_HEADING)
 
     $exampleNumber = 0
+    # create an empty array
     $examplesProperties = @()
 
+    # extract the content of Examples(according to end index:$indexOfParameters - start index:$indexOfExamples)
     $examplesContent = $fileContent.Substring($indexOfExamples, $indexOfParameters - $indexOfExamples)
+    # Select String according to regular expression "\n###\s*.+" = "\n### Example 1: Creating and modifying a new environment" and return hash table including name&value.
     $examplesTitles = ($examplesContent | Select-String -Pattern $SINGLE_EXAMPLE_TITLE_HEADING_REGEX -AllMatches).Matches
-    # Skip the 1st because it is $EXAMPLES_HEADING.
+    # Skip the 1st because it is $EXAMPLES_HEADING. Split content by "\n###\s*.+". Extract content without title.
     $examplesContentWithoutTitle = $examplesContent -split $SINGLE_EXAMPLE_TITLE_HEADING_REGEX | Select-Object -Skip 1
+
+
     foreach ($exampleContent in $examplesContentWithoutTitle) {
+        # Trim():remove any leading and trailing empty lines.
         $exampleTitle = ($examplesTitles[$exampleNumber].Value -split $SINGLE_EXAMPLE_HEADING_REGEX)[1].Trim()
         $exampleNumber++
         $exampleCodes = @()
         $exampleOutputs = @()
         $exampleDescriptions = @()
 
+        #match code in ```powershell```
         $exampleCodeBlocks = ($exampleContent | Select-String -Pattern $CODE_BLOCK_REGEX -AllMatches).Matches
+        #match code in ```output```
         $exampleOutputBlocks = ($exampleContent | Select-String -Pattern $OUTPUT_BLOCK_REGEX -AllMatches).Matches
+        # If there is no codeblock then exampleContent is description.
         if ($exampleCodeBlocks.Count -eq 0) {
             $description = $exampleContent.Trim()
             if ($description -ne "") {
@@ -69,6 +87,7 @@ function Get-ExamplesDetailsFromMd {
                 $exampleDescriptions += $description
             }
 
+            # if there is no ```output``` split codelines and outputlines
             if ($exampleOutputBlocks.Count -eq 0) {
                 foreach ($exampleCodeBlock in $exampleCodeBlocks) {
                     #$exampleCodeLines = ($exampleCodeBlock.Value | Select-String -Pattern "((\n(([A-Za-z \t\\:>])*(PS|[A-Za-z]:)(\w|[\\/\[\].\- ])*(>|&gt;)+( PS)*)*[ \t]*[A-Za-z]\w+-[A-Za-z]\w+\b(?!(-|   +\w)))|(\n(([A-Za-z \t\\:>])*(PS|[A-Za-z]:)(\w|[\\/\[\].\- ])*(>|&gt;)+( PS)*)*[ \t]*((@?\(.+\) *[|.-] *\w)|(\[.+\]\$)|(@{.+})|('[^\n\r']*' *[|.-] *\w)|(`"[^\n\r`"]*`" *[|.-] *\w)|\$)))([\w-~``'`"$= \t:;<>@()\[\]{},.+*/|\\&!?%#]*[``|] *(\n|\r\n))*[\w-~``'`"$= \t:;<>@()\[\]{},.+*/|\\&!?%#]*(?=\n|\r\n|#)" -CaseSensitive -AllMatches).Matches
@@ -89,7 +108,7 @@ function Get-ExamplesDetailsFromMd {
                         for ($i = 0; $i -lt $exampleCodeLines.Count; $i++) {
                             # If a codeline contains " :", it's not a codeline but an output line of "Format-List".
                             if ($exampleCodeLines[$i].Value -notmatch " : *\w") {
-                                # If a codeline ends with "`", "\r", or "\n", it should end at the last "`".
+                                # If a codeline ends with "`", "\r", or "\n", it should end at the last "`". 
                                 $lastCharacter = $exampleCodeLines[$i].Value.Substring($exampleCodeLines[$i].Value.Length - 1, 1)
                                 if ($lastCharacter -eq "``" -or $lastCharacter -eq "`r" -or $lastCharacter -eq "`n") {
                                     $exampleCodes += $exampleCodeLines[$i].Value.Substring(0, $exampleCodeLines[$i].Value.LastIndexOf("``")).Trim()
@@ -99,7 +118,6 @@ function Get-ExamplesDetailsFromMd {
                                 }
 
                                 # Content before the first codeline, between codelines, and after the last codeline is output.
-                                # If an output line starts with "-", it's an incomplete codeline, but it should still be added to output.
                                 if ($i -eq 0) {
                                     $startIndex = $exampleCodeBlock.Value.IndexOf("`n")
                                     $output = $exampleCodeBlock.Value.Substring($startIndex, $exampleCodeLines[$i].Index - $startIndex).Trim()
@@ -114,6 +132,7 @@ function Get-ExamplesDetailsFromMd {
                                 else {
                                     $nextStartIndex = $exampleCodeBlock.Value.LastIndexOf("`n")
                                 }
+                                 # If an output line starts with "-", it's an incomplete codeline, but it should still be added to output.
                                 $output = $exampleCodeBlock.Value.Substring($startIndex, $nextStartIndex - $startIndex).Trim()
                                 if ($output -match "^-+\w") {
                                     $exampleOutputs += $output
@@ -126,13 +145,16 @@ function Get-ExamplesDetailsFromMd {
                     }
                 }
             }
+            # if there is ```output```
             else {
+                # extract code from the first "\n" to the last "\n"
                 foreach ($exampleCodeBlock in $exampleCodeBlocks) {
                     $code = $exampleCodeBlock.Value.Substring($exampleCodeBlock.Value.IndexOf("`n"), $exampleCodeBlock.Value.LastIndexOf("`n") - $exampleCodeBlock.Value.IndexOf("`n")).Trim()
                     if ($code -ne "") {
                         $exampleCodes += $code
                     }
                 }
+                # extract output from the first "\n" to the last "\n"
                 foreach ($exampleOutputBlock in $exampleOutputBlocks) {
                     $output = $exampleOutputBlock.Value.Substring($exampleOutputBlock.Value.IndexOf("`n"), $exampleOutputBlock.Value.LastIndexOf("`n") - $exampleOutputBlock.Value.IndexOf("`n")).Trim()
                     if ($output -ne "") {
@@ -141,7 +163,7 @@ function Get-ExamplesDetailsFromMd {
                 }
             }
 
-            # From the end of the last codeblock to the end is example description.
+            # From the end of the last codeblock to the end is example description. ? outputBlock
             $description = $exampleContent.SubString($exampleCodeBlocks[-1].Index + $exampleCodeBlocks[-1].Length).Trim()
             if ($description -ne "") {
                 $exampleDescriptions += $description
@@ -232,7 +254,7 @@ function Get-ScriptAnalyzerResult {
         [Parameter(Mandatory, HelpMessage = "PSScriptAnalyzer custom rules path. Supports wildcard.")]
         [string[]]$RulePath,
         [switch]$IncludeDefaultRules
-)
+    )
 
     # Validate script file exists.
     if (!(Test-Path $ScriptPath -PathType Leaf)) {
@@ -380,7 +402,7 @@ function Measure-SectionMissingAndOutputScript {
             # Output codes by example
             if ($OutputScriptsInFile.IsPresent) {
                 $null = New-Item -ItemType Directory -Path $cmdletExamplesScriptPath -ErrorAction SilentlyContinue
-                [IO.File]::WriteAllText("$cmdletExamplesScriptPath\$cmdlet-$exampleNumber.ps1", $exampleCodes -join "`n", (New-Object Text.UTF8Encoding($false)))
+                [IO.File]::WriteAllText((New-Item -Type File  .\$cmdletExamplesScriptPath\$cmdlet-$exampleNumber.ps1).FullName, $exampleCodes -join "`n", (New-Object Text.UTF8Encoding($false)))
             }
         }
     }

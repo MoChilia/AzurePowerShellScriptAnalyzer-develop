@@ -1,5 +1,6 @@
 #Requires -Modules PSScriptAnalyzer
 
+# required parameters
 [CmdletBinding(DefaultParameterSetName = "Markdown")]
 param (
     [Parameter(Mandatory, HelpMessage = "Markdown searching paths. Empty for current path. Supports wildcard.", ParameterSetName = "Markdown")]
@@ -21,8 +22,11 @@ param (
     [switch]$CleanScripts
 )
 
+# include
 . $PSScriptRoot\utils.ps1
 
+# create "ScriptsByExample" folder
+# @() creates an empty array
 if ($PSCmdlet.ParameterSetName -eq "Markdown") {
     $ScriptsByExampleFolder = "ScriptsByExample"
     $scaleTable = @()
@@ -30,12 +34,14 @@ if ($PSCmdlet.ParameterSetName -eq "Markdown") {
     $deletePromptAndSeparateOutputTable = @()
 }
 $analysisResultsTable = @()
-# Clean caches
+
+# Clean caches, remove files in "output" folder
 if ($OutputScriptsInFile.IsPresent) {
     Remove-Item $OutputFolder\$ScriptsByExampleFolder -Recurse -ErrorAction SilentlyContinue
 }
 Remove-Item $OutputFolder\*.csv -Recurse -ErrorAction SilentlyContinue
 
+# find examples in ".md", output ".ps1"
 if ($PSCmdlet.ParameterSetName -eq "Markdown") {
     @() + (Get-Item $MarkdownPaths) + (Get-ChildItem $MarkdownPaths -Recurse:$Recurse.IsPresent -Attributes Directory -Filter help) + (Get-ChildItem $MarkdownPaths -Recurse:$Recurse.IsPresent -Attributes Directory -Filter Az.*) | foreach {
         # Parent folder name
@@ -54,15 +60,19 @@ if ($PSCmdlet.ParameterSetName -eq "Markdown") {
             }
         }
     }
+    # Could it be moved to next "if"? weird
     if ($AnalyzeScriptsInFile.IsPresent) {
         $ScriptPaths = "$OutputFolder\$ScriptsByExampleFolder"
     }
-    # Summarize analysis results
+    # Summarize searching results
     $null = New-Item -ItemType Directory -Path $OutputFolder -ErrorAction SilentlyContinue
     $scaleTable | Export-Csv "$OutputFolder\Scale.csv" -NoTypeInformation
     $missingTable | where {$_ -ne $null} | Export-Csv "$OutputFolder\Missing.csv" -NoTypeInformation
     $deletePromptAndSeparateOutputTable | where {$_ -ne $null} | Export-Csv "$OutputFolder\DeletingSeparating.csv" -NoTypeInformation
 }
+
+
+# $AnalyzeScriptsInFile.IsPresent, start analyze
 if ($PSCmdlet.ParameterSetName -eq "Script" -or $AnalyzeScriptsInFile.IsPresent) {
     # Analyze codes
     $analysisResultsTable = @()
@@ -70,6 +80,7 @@ if ($PSCmdlet.ParameterSetName -eq "Script" -or $AnalyzeScriptsInFile.IsPresent)
         # Parent folder name
         $module = (Get-Item $_).Name
         $analysisResults = @()
+        # read and analyze ".ps1" in \ScriptsByExample
         Get-ChildItem $_ -Attributes !Directory -Filter "*.ps1" -ErrorAction Stop | foreach {
             Write-Output "Analyzing file $($_.FullName) ..."
             $analysisResults += Get-ScriptAnalyzerResult $module $_.FullName $RulePaths -IncludeDefaultRules:$IncludeDefaultRules.IsPresent -ErrorAction Continue
