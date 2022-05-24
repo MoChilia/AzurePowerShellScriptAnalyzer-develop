@@ -35,7 +35,7 @@ install-module PSScriptAnalyzer
 - [ ] If Cmdlet supports dynamic parameters, then it is unable to check redundant parameters.
 
 
-## Request for CI
+## CI Requests
 - **Timing**: analyzing examples  should be a new build target in `build.proj`. It should be triggered after (or before) the "StaticAnalysisHelp" target.
 - **Input**: only the markdown files updated by this PR should be analyzed. 
 The build pipeline should save a list of updated files, and the static analysis pipeline should consume the list and pass the paths of the markdown files to the tool.
