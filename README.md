@@ -11,21 +11,25 @@
 
 install-module PSScriptAnalyzer
 
-./AzurePowerShellScriptAnalyzer-develop/Measure-MarkdownOrScript.ps1 -MarkdownPaths "$env:HOME\azure-powershell\src\Accounts\Accounts\help"  -RulePaths "$env:HOME\AzurePowerShellScriptAnalyzer-develop\AnalyzeRules\\*.psm1" -Recurse -AnalyzeScriptsInFile -OutputScriptsInFile -OutputResultsByModule
+.\AzurePowerShellScriptAnalyzer-develop\Measure-MarkdownOrScript.ps1 -MarkdownPaths "$env:HOME\azure-powershell\src\Accounts\Accounts\help"  -RulePaths "$env:HOME\AzurePowerShellScriptAnalyzer-develop\AnalyzeRules\\*.psm1" -Recurse -AnalyzeScriptsInFile -OutputScriptsInFile -OutputResultsByModule
+
+.\Measure-MarkdownOrScript.ps1 -MarkdownPaths "$env:HOME\azure-powershell\src\Accounts\Accounts\help"  -RulePaths "$env:HOME\AzurePowerShellScriptAnalyzer-develop\AnalyzeRules\\*.psm1" -Recurse -AnalyzeScriptsInFile -OutputScriptsInFile -OutputResultsByModule
+
 
 
 Todo list
 - [x] ".\ScriptsByExample\\$module\\*.ps1" not in the 'output' folder
-- [x] Fix the error 
-    Get-ChildItem: /home/shiying/AzurePowerShellScriptAnalyzer-develop/utils.ps1:223:5
-    Line |
-    223 |      Get-ChildItem $SrcFilePaths -Filter *.psm1 | foreach {
-        |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-        | Cannot find path '/home/shiying/AnalyzeRules' because it does not exist.
+- [x] Fix the error: Cannot find path '/home/shiying/AnalyzeRules' because it does not exist.
 - [x] ".\ScriptsByExample\\$module.csv" is missing (no analysis is done)
 - [x] Q: why "Disable-AzContextAutosave" shows "missing Example Code"? A: ```powershell <!-- Aladdin Generated Example -->  ```, $CODE_BLOCK_REGEX = "``````(powershell)?\s*\n(.*\n)+?\s*``````"can not be matched.
 - [x] Q: why '"Add-AzEnvironment" is not a valid command name.' occur in result? A:missing "AzPreview" module.
-- [ ] Check why breaking rules: Unassigned_Variable, Mismatched_Parameter_Value_Type,Unbinded_Parameter_Name,Invalid_Parameter_Name
+- [x] Check why breaking rules: Unassigned_Variable, Mismatched_Parameter_Value_Type,Unbinded_Parameter_Name,Invalid_Parameter_Name
+- [x] add comment to each function
+- [x] add configuration guide
+- [ ] Use PSScriptRoot to join absolute path.
+
+Issue list
 - [ ] When using CI to verify PR, is it needed to turn on the switch 'IncludeDefaultRules'?
 - [ ] Abandon the complex 'codeRegex', use PSScriptAnalyzer to judge.
-- [ ] Use PSScriptRoot to join absolute path.
+- [ ] Whether it is required to include "severity" in the csv? Discuss how to deal with "warning" in CI and determine the definition of "severity".
+- [ ] If Cmdlet supports dynamic parameters, then it is unable to check redundant parameters.

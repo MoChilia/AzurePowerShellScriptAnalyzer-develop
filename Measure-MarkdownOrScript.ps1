@@ -1,6 +1,12 @@
+<#
+    .SYNOPSIS
+        The script to find examples in ".md" and analyze the examples by custom rules.
+    .NOTES
+        File Name: Measure-MarkdownOrScript.ps1
+#>
+
 #Requires -Modules PSScriptAnalyzer
 
-# required parameters
 [CmdletBinding(DefaultParameterSetName = "Markdown")]
 param (
     [Parameter(Mandatory, HelpMessage = "Markdown searching paths. Empty for current path. Supports wildcard.", ParameterSetName = "Markdown")]
@@ -22,7 +28,6 @@ param (
     [switch]$CleanScripts
 )
 
-# include
 . $PSScriptRoot\utils.ps1
 
 # create "ScriptsByExample" folder
@@ -40,7 +45,7 @@ if ($OutputScriptsInFile.IsPresent) {
     Remove-Item $OutputFolder\$ScriptsByExampleFolder -Recurse -ErrorAction SilentlyContinue
 }
 Remove-Item $OutputFolder\*.csv -Recurse -ErrorAction SilentlyContinue
-
+/home/shiying/AzurePowerShellScriptAnalyzer-develop/DemoMarkdowns
 # find examples in ".md", output ".ps1"
 if ($PSCmdlet.ParameterSetName -eq "Markdown") {
     @() + (Get-Item $MarkdownPaths) + (Get-ChildItem $MarkdownPaths -Recurse:$Recurse.IsPresent -Attributes Directory -Filter help) + (Get-ChildItem $MarkdownPaths -Recurse:$Recurse.IsPresent -Attributes Directory -Filter Az.*) | foreach {
@@ -60,7 +65,6 @@ if ($PSCmdlet.ParameterSetName -eq "Markdown") {
             }
         }
     }
-    # Could it be moved to next "if"? weird
     if ($AnalyzeScriptsInFile.IsPresent) {
         $ScriptPaths = "$OutputFolder\$ScriptsByExampleFolder"
     }
@@ -72,9 +76,8 @@ if ($PSCmdlet.ParameterSetName -eq "Markdown") {
 }
 
 
-# $AnalyzeScriptsInFile.IsPresent, start analyze
+# Analyze scripts
 if ($PSCmdlet.ParameterSetName -eq "Script" -or $AnalyzeScriptsInFile.IsPresent) {
-    # Analyze codes
     $analysisResultsTable = @()
     @() + (Get-Item $ScriptPaths) + (Get-ChildItem $ScriptPaths -Recurse:$Recurse.IsPresent -Attributes Directory) | foreach {
         # Parent folder name
@@ -90,7 +93,7 @@ if ($PSCmdlet.ParameterSetName -eq "Script" -or $AnalyzeScriptsInFile.IsPresent)
         }
         $analysisResultsTable += $analysisResults
     }
-    # Summarize analysis results
+    # Summarize analysis results, output in Result.csv
     $analysisResultsTable | where {$_ -ne $null} | Export-Csv "$OutputFolder\Results-$(Get-Date -UFormat %s).csv" -NoTypeInformation
 }
 

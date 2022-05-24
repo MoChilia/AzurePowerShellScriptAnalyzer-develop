@@ -1,3 +1,11 @@
+<#
+    .SYNOPSIS
+    Custom rule for command name.
+    .NOTES
+    File: CommandName.psm1
+#>
+
+
 # Import-Module AzPreview
 # Import-Module AzureRM
 
@@ -8,8 +16,8 @@ enum RuleNames {
 }
 
 <#
-.DESCRIPTION
-Detect alias or unrecognized cmdlet
+    .SYNOPSIS
+    Returns invaild, alias or unrecognized cmdlets.
 #>
 function Measure-CommandName {
     [CmdletBinding()]
@@ -31,6 +39,7 @@ function Measure-CommandName {
                 param([System.Management.Automation.Language.Ast]$Ast)
                 $global:Ast = $Ast
 
+                #find all command in .ps1
                 if ($Ast -is [System.Management.Automation.Language.CommandAst]) {
                     [System.Management.Automation.Language.CommandAst]$CommandAst = $Ast
                     if ($CommandAst.InvocationOperator -eq "Unknown") {
@@ -69,6 +78,7 @@ function Measure-CommandName {
                 return $false
             }
 
+            # find all false scriptblock
             [System.Management.Automation.Language.Ast[]]$Asts = $ScriptBlockAst.FindAll($Predicate, $false)
             for ($i = 0; $i -lt $Asts.Count; $i++) {
                 if ($global:CommandParameterPair[$i].ParameterName -eq "<is not valid>") {

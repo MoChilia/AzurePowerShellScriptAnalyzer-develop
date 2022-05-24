@@ -1,3 +1,10 @@
+<#
+    .SYNOPSIS
+    Custom rule for parameter name and value.
+    .NOTES
+    File: ParameterNameAndValue.psm1
+#>
+
 # Import-Module AzPreview
 # Import-Module AzureRM
 
@@ -11,6 +18,11 @@ enum RuleNames {
     Mismatched_Parameter_Value_Type
 }
 
+
+<#
+    .SYNOPSIS
+    Gets the actual value from ast.
+#>
 function Get-ActualVariableValue {
     param([System.Management.Automation.Language.Ast]$CommandElementAst)
 
@@ -35,8 +47,8 @@ function Get-ActualVariableValue {
 }
 
 <#
-.DESCRIPTION
-Detect parameter and expression error
+    .SYNOPSIS
+    Detects parameter and expression error.
 #>
 function Measure-ParameterNameAndValue {
     [CmdletBinding()]
@@ -91,6 +103,7 @@ function Measure-ParameterNameAndValue {
                         return $false
                     }
 
+                    # Get command from alias
                     if ($GetCommand.CommandType -eq "Alias") {
                         $CommandNameNotAlias = $GetCommand.ResolvedCommandName
                         $GetCommand = Get-Command $CommandNameNotAlias
@@ -102,6 +115,7 @@ function Measure-ParameterNameAndValue {
                         $global:AppearedParameters = @() #empty
                         $global:AppearedExpressions = @() #empty
 
+                        # $AllParameters is the set of the command required to have
                         # sort ParameterSets, move ParameterSets that have position parameters to the front.
                         $ParameterSets = @() +
                             # ($GetCommand.ParameterSets | where {$_.Name -eq $GetCommand.DefaultParameterSet}) +
@@ -114,6 +128,7 @@ function Measure-ParameterNameAndValue {
                             foreach ($CommandElement in $CommandAst.CommandElements) {
                                 if ($CommandElement -is [System.Management.Automation.Language.CommandParameterAst]) {
                                     $ParameterName = ([System.Management.Automation.Language.CommandParameterAst]$CommandElement).ParameterName
+                                    # Unknown_Parameter_Set
                                     if ($ParameterName -in $AllParameters -and $ParameterName -notin $Parameters) {
                                         # Exclude ParameterNames that are not in AllParameters. They will be reported later.
                                         $AllParameterNamesInASet_Flag = $false
@@ -152,6 +167,7 @@ function Measure-ParameterNameAndValue {
                                         $ParameterName -in $GetCommand.Parameters.$_.Name -or
                                         $ParameterName -in $GetCommand.Parameters.$_.Aliases
                                     }
+                                    # Invalid_Parameter_Name
                                     if ($ParameterNameNotAlias -eq $null) {
                                         # ParameterName is not in AllParameters.
                                         # will report later.
@@ -176,6 +192,7 @@ function Measure-ParameterNameAndValue {
                                         $i += 1
                                     }
                                     else {
+                                        # Unassigned_Parameter
                                         # not a SwitchParameter
                                         if ($NextCommandElement -eq $null -or $NextCommandElement -is [System.Management.Automation.Language.CommandParameterAst]) {
                                             # NonSwitchParameter + Parameter
@@ -212,6 +229,7 @@ function Measure-ParameterNameAndValue {
                                             break
                                         }
                                     }
+                                    # Unbinded_Parameter_Name
                                     if ($Position -gt $PositionMaximum) {
                                         # This expression doesn't belong to any parameters.
                                         $global:ParameterExpressionPair += @{
@@ -241,6 +259,7 @@ function Measure-ParameterNameAndValue {
                         }
                         if ($ParameterNameNotAlias -eq $null) {
                             # ParameterName is not in AllParameters.
+                            # Invalid_Parameter_Name
                             if ($NextCommandElement -is [System.Management.Automation.Language.ExpressionAst]) {
                                 $global:SkipNextCommandElementAst = $true
                             }
@@ -255,6 +274,7 @@ function Measure-ParameterNameAndValue {
                             # ParameterName is correct.
                             if ($ParameterNameNotAlias -in $global:AppearedParameters) {
                                 # This parameter appeared more than once.
+                                # Duplicate_Parameter_Name
                                 $global:CommandParameterPair += @{
                                     CommandName = $CommandName
                                     ParameterName = $ParameterNameNotAlias
@@ -270,6 +290,7 @@ function Measure-ParameterNameAndValue {
                                 # Parameter is not a SwitchParameter.
                                 if ($NextCommandElement -eq $null -or $NextCommandElement -is [System.Management.Automation.Language.CommandParameterAst]) {
                                     # Parameter is not assigned with a value.
+                                    # Unassigned_Parameter
                                     $global:CommandParameterPair += @{
                                         CommandName = $CommandName
                                         ParameterName = $ParameterName
@@ -287,6 +308,7 @@ function Measure-ParameterNameAndValue {
                                         $NextCommandElement_Copy = Get-ActualVariableValue $global:AssignmentLeftAndRight.($NextCommandElement_Copy.Extent.Text)
                                         if ($NextCommandElement_Copy -eq $null) {
                                             # Variable is not assigned with a value.
+                                            # Unassigned_Variable
                                             $global:CommandParameterPair += @{
                                                 CommandName = $CommandName
                                                 ParameterName = "-$ParameterName"
@@ -309,6 +331,7 @@ function Measure-ParameterNameAndValue {
                                             $ReturnType = [Object]
                                         }
                                         $ExpectedType = $GetCommand.Parameters.$ParameterNameNotAlias.ParameterType
+                                        # Mismatched_Parameter_Value_Type
                                         if ($ReturnType -ne $ExpectedType -and $ReturnType -isnot $ExpectedType -and
                                         !$ReturnType.GetInterfaces().Contains($ExpectedType) -and !$ReturnType.GetInterfaces().Contains($ExpectedType.GetElementType())) {
                                                 $global:CommandParameterPair += @{
@@ -323,6 +346,7 @@ function Measure-ParameterNameAndValue {
                                         # value is a constant expression
                                         $ExpectedType = $GetCommand.Parameters.$ParameterNameNotAlias.ParameterType
                                         $ConvertedObject = $NextCommandElement_Copy.Extent.Text -as $ExpectedType
+                                        # Mismatched_Parameter_Value_Type
                                         if ($NextCommandElement_Copy.StaticType -ne $ExpectedType -and $ConvertedObject -eq $null) {
                                             $global:CommandParameterPair += @{
                                                 CommandName = $CommandName
