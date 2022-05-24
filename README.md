@@ -17,7 +17,7 @@ install-module PSScriptAnalyzer
 
 
 
-Todo list
+## Todo list
 - [x] ".\ScriptsByExample\\$module\\*.ps1" not in the 'output' folder
 - [x] Fix the error: Cannot find path '/home/shiying/AnalyzeRules' because it does not exist.
 - [x] ".\ScriptsByExample\\$module.csv" is missing (no analysis is done)
@@ -28,8 +28,16 @@ Todo list
 - [x] add configuration guide
 - [ ] Use PSScriptRoot to join absolute path.
 
-Issue list
+## Issue list
 - [ ] When using CI to verify PR, is it needed to turn on the switch 'IncludeDefaultRules'?
 - [ ] Abandon the complex 'codeRegex', use PSScriptAnalyzer to judge.
 - [ ] Whether it is required to include "severity" in the csv? Discuss how to deal with "warning" in CI and determine the definition of "severity".
 - [ ] If Cmdlet supports dynamic parameters, then it is unable to check redundant parameters.
+
+
+## Request for CI
+- **Timing**: analyzing examples  should be a new build target in `build.proj`. It should be triggered after (or before) the "StaticAnalysisHelp" target.
+- **Input**: only the markdown files updated by this PR should be analyzed. 
+The build pipeline should save a list of updated files, and the static analysis pipeline should consume the list and pass the paths of the markdown files to the tool.
+- **Output**: the tool should store the results as a csv file in pipeline artifacts. We should update the static analysis result checker to include this csv.
+- **Suppression**: the tool should support suppressing issues just like other static analyzers.
