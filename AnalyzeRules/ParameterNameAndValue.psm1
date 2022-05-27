@@ -8,6 +8,8 @@
 # Import-Module AzPreview
 # Import-Module AzureRM
 
+"invoke Parameter.psm1"| Out-File invokecommand.txt -Append 
+
 enum RuleNames {
     Unknown_Parameter_Set
     Invalid_Parameter_Name

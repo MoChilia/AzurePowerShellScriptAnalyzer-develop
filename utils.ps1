@@ -445,50 +445,52 @@ function Get-ScriptAnalyzerResult {
         [switch]$IncludeDefaultRules
     )
 
-    # Validate script file exists.
-    if (!(Test-Path $ScriptPath -PathType Leaf)) {
-        throw "Cannot find cached script file '$ScriptPath'."
-    }
+    # # Validate script file exists.
+    # if (!(Test-Path $ScriptPath -PathType Leaf)) {
+    #     throw "Cannot find cached script file '$ScriptPath'."
+    # }
 
-    # get script file name
-    $scriptName = [IO.Path]::GetFileName($ScriptPath)
-    $scriptBaseName = [IO.Path]::GetFileNameWithoutExtension($ScriptPath)
-    # split file name like "Add-AzEnvironment-1.ps1"
-    if ($scriptBaseName.Split("-").Count -eq 3 -and $scriptBaseName.Split("-")[2] -as [int]) {
-        $cmdlet = $scriptBaseName.Split("-")[0..1] -join "-"
-        $example = $scriptBaseName.Split("-")[2]
-    }
-    else {
-        $cmdlet = $scriptName
-        $example = ""
-    }
-    $importFailedResults = @()
-    $importContent = ""
+    # # get script file name
+    # $scriptName = [IO.Path]::GetFileName($ScriptPath)
+    # $scriptBaseName = [IO.Path]::GetFileNameWithoutExtension($ScriptPath)
+    # # split file name like "Add-AzEnvironment-1.ps1"
+    # if ($scriptBaseName.Split("-").Count -eq 3 -and $scriptBaseName.Split("-")[2] -as [int]) {
+    #     $cmdlet = $scriptBaseName.Split("-")[0..1] -join "-"
+    #     $example = $scriptBaseName.Split("-")[2]
+    # }
+    # else {
+    #     $cmdlet = $scriptName
+    #     $example = ""
+    # }
+    # $importFailedResults = @()
+    # $importContent = ""
 
-    $importResults = Measure-ScriptFile $ScriptPath
-    foreach ($path in $importResults.FailedResults) {
-        $importFailedResults += [PSCustomObject]@{
-            Module = $module
-            Cmdlet = $cmdlet
-            Example = $example
-            RuleName = "Imported_Script_Not_Exist"
-            Message = "Imported Script $path doesn't exist."
-            Extent = ". $path"
-        }
-    }
-    $importResults.SucceededResults | foreach {
-        $importContent += ". $_`n"
-    }
-    $tempFolderPath = "TempPSSARules"
-    Add-ContentToHeadOfRule $RulePaths $tempFolderPath $importContent
-    # Invoke PSScriptAnalyzer : input scriptblock, output error set in $result with property RuleName, Message, Extent
+    # $importResults = Measure-ScriptFile $ScriptPath
+    # foreach ($path in $importResults.FailedResults) {
+    #     $importFailedResults += [PSCustomObject]@{
+    #         Module = $module
+    #         Cmdlet = $cmdlet
+    #         Example = $example
+    #         RuleName = "Imported_Script_Not_Exist"
+    #         Message = "Imported Script $path doesn't exist."
+    #         Extent = ". $path"
+    #     }
+    # }
+    # $importResults.SucceededResults | foreach {
+    #     $importContent += ". $_`n"
+    # }
+    # $tempFolderPath = "TempPSSARules"
+    # Add-ContentToHeadOfRule $RulePaths $tempFolderPath $importContent
+
+    #Invoke PSScriptAnalyzer : input scriptblock, output error set in $result with property RuleName, Message, Extent
     if ($RulePath -eq $null) {
         $results = Invoke-ScriptAnalyzer -Path $ScriptPath -IncludeDefaultRules:$IncludeDefaultRules.IsPresent
     }
     else {
         $results = Invoke-ScriptAnalyzer -Path $ScriptPath -CustomRulePath $RulePath -IncludeDefaultRules:$IncludeDefaultRules.IsPresent
+        Write-Host "invoke-ScriptAnalyzer"
     }
-    Remove-Item $tempFolderPath -Recurse
+    # Remove-Item $tempFolderPath -Recurse
 
     return $importFailedResults + $results | Select-Object -Property @{Name = "Module"; Expression = {$Module}},
         @{Name = "Cmdlet";Expression={$Cmdlet}},
