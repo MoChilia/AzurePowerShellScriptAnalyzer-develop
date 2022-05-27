@@ -1,0 +1,5 @@
+DemoMarkdowns/Az-Asks.ps1
+DemoMarkdowns/Add-AzEnvironment.md
+DemoMarkdowns/New-AzADDomainService.md
+DemoMarkdowns/New-AzAksNodePool.md
+DemoMarkdowns/Remove-AzApiManagementApiRelease.md

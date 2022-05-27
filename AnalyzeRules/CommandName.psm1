@@ -7,13 +7,13 @@
 
 # Import-Module AzPreview
 # Import-Module AzureRM
-$s=Get-Date
+# $s=Get-Date
 Import-Module -Name ./Debug/Az.Accounts -Scope Global 
 Import-Module -Name ./Debug/Az.ADDomainServices -Scope Global 
 Import-Module -Name ./Debug/Az.Aks -Scope Global
-$e=Get-Date 
-($e - $s).TotalSeconds| Out-File time.txt -Append 
-"invoke commandName.psm1"| Out-File invokecommand.txt -Append 
+# $e=Get-Date 
+# ($e - $s).TotalSeconds| Out-File time.txt -Append 
+# "invoke commandName.psm1"| Out-File invokecommand.txt -Append 
 # Import-Module (Get-ChildItem -Path ./Debug).FullName -Scope Global
 # Remove-Item modules.txt
 # Get-Module | Out-File time.txt -Append
@@ -55,8 +55,8 @@ function Measure-CommandName {
                     if ($CommandAst.InvocationOperator -eq "Unknown") {
                         # $CommandName = $CommandAst.GetCommandName()
                         $CommandName = $CommandAst.CommandElements[0].Extent.Text
-                        # $GetCommand = Get-Command $CommandName -ErrorAction SilentlyContinue
-                        $GetCommand = Get-Command -ListImported $CommandName
+                        $GetCommand = Get-Command $CommandName -ErrorAction SilentlyContinue
+                        # $GetCommand = Get-Command -ListImported $CommandName
                         if ($GetCommand -eq $null) {
                             # CommandName is not valid.
                             $global:CommandParameterPair += @{

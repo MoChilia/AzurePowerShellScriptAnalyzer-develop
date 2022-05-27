@@ -15,6 +15,8 @@ install-module PSScriptAnalyzer
 
 .\Measure-MarkdownOrScript.ps1 -MarkdownPaths "$env:HOME\AzurePowerShellScriptAnalyzer-develop\DemoMarkdowns"  -RulePaths "$env:HOME\AzurePowerShellScriptAnalyzer-develop\AnalyzeRules\\*.psm1" -Recurse -AnalyzeScriptsInFile -OutputScriptsInFile -OutputResultsByModule
 
+.\Measure-MarkdownOrScript.ps1 -MarkdownPaths "$env:HOME\AzurePowerShellScriptAnalyzer-develop\FilesChanged.txt"  -RulePaths "$env:HOME\AzurePowerShellScriptAnalyzer-develop\AnalyzeRules\\*.psm1" -Recurse -AnalyzeScriptsInFile -OutputScriptsInFile -OutputResultsByModule
+
 
 
 

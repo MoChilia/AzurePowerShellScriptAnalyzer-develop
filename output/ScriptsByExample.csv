@@ -1,0 +1,5 @@
+"Module","Cmdlet","Example","RuleName","Message","Extent"
+"ScriptsByExample","Remove-AzApiManagementApiRelease",,"Unassigned_Variable","""New-AzADDomainService -ReplicaSet $replicaSet is a null-valued parameter value.""","-ReplicaSet"
+"ScriptsByExample","Remove-AzApiManagementApiRelease",,"Invalid_Cmdlet","""New-AzAks"" is not a valid command name.","New-AzAks -ResourceGroupName myResourceGroup -Name myCluster -WindowsProfileAdminUserName azureuser -WindowsProfileAdminUserPassword $cred -NetworkPlugin azure -NodeVmSetType VirtualMachineScaleSets"
+"ScriptsByExample","Remove-AzApiManagementApiRelease",,"Invalid_Cmdlet","""New-AzApiManagementContext"" is not a valid command name.","New-AzApiManagementContext -ResourceGroupName ""Api-Default-WestUS"" -ServiceName ""contoso"""
+"ScriptsByExample","Remove-AzApiManagementApiRelease",,"Invalid_Cmdlet","""Remove-AzAzureRmApiManagementApiRelease"" is not a valid command name.","Remove-AzAzureRmApiManagementApiRelease -Context $apimContext -ApiId ""echo-api"" -ReleaseId ""2"""

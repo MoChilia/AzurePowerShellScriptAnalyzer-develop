@@ -488,7 +488,6 @@ function Get-ScriptAnalyzerResult {
     }
     else {
         $results = Invoke-ScriptAnalyzer -Path $ScriptPath -CustomRulePath $RulePath -IncludeDefaultRules:$IncludeDefaultRules.IsPresent
-        Write-Host "invoke-ScriptAnalyzer"
     }
     # Remove-Item $tempFolderPath -Recurse
 
